@@ -1,0 +1,69 @@
+go 1.18
+
+use (
+	.
+
+	// define the plugins
+	./plugins/core
+	./plugins/dubbo
+	./plugins/gin
+	./plugins/http
+	./plugins/go-redisv9
+	./plugins/go-restfulv2
+	./plugins/gorm
+	./plugins/kratosv2
+	./plugins/microv4
+	./plugins/mongo
+	./plugins/sql
+	./plugins/runtimemetrics
+	./plugins/mux
+	./plugins/grpc
+	./plugins/irisv12
+	./plugins/trace-activation
+	./plugins/fasthttp
+	./plugins/fiber
+	./plugins/echov4
+	./plugins/rocketmq
+	./plugins/amqp
+	./plugins/pulsar
+	./plugins/segmentio-kafka
+	./plugins/go-elasticsearchv8
+
+	./test/benchmark-codebase/consumer
+	./test/benchmark-codebase/provider
+
+	./test/plugins/runner-helper
+
+	// define the plugin test scenarios
+	./test/plugins/scenarios/dubbo
+	./test/plugins/scenarios/gin
+	./test/plugins/scenarios/short_versions_gin
+	./test/plugins/scenarios/http
+	./test/plugins/scenarios/go-redisv9
+	./test/plugins/scenarios/gorm
+	./test/plugins/scenarios/kratosv2
+	./test/plugins/scenarios/microv4
+	./test/plugins/scenarios/mongo
+	./test/plugins/scenarios/mysql
+	./test/plugins/scenarios/logrus
+	./test/plugins/scenarios/zap
+	./test/plugins/scenarios/mux
+	./test/plugins/scenarios/grpc
+  	./test/plugins/scenarios/irisv12
+	./test/plugins/scenarios/trace-activation
+  	./test/plugins/scenarios/fasthttp
+  	./test/plugins/scenarios/fiber
+
+	./test/plugins/scenarios/plugin_exclusion
+	./test/plugins/scenarios/runtime_metrics
+	./test/plugins/scenarios/echov4
+	./test/plugins/scenarios/rocketmq
+	./test/plugins/scenarios/amqp
+	./test/plugins/scenarios/pulsar
+	./test/plugins/scenarios/segmentio-kafka
+	./test/plugins/scenarios/go-elasticsearchv8
+
+	./tools/go-agent
+
+	./toolkit
+)
