@@ -1,4 +1,4 @@
-module github.com/apache/skywalking-go
+module github.com/ahi-hzor/skywalking-go
 
 go 1.18
 
