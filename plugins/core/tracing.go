@@ -60,7 +60,7 @@ func (t *Tracer) CreateEntrySpan(operationName string, extractor interface{}, op
 	}
 	var ref = &SpanContext{}
 	if err := ref.Decode(extractor.(tracing.ExtractorWrapper).Fun()); err != nil {
-		fmt.Println("decode entry span ref error")
+		fmt.Printf("decode entry span ref error %v", err)
 		return nil, err
 	}
 	if !ref.Valid {
@@ -84,16 +84,19 @@ func (t *Tracer) CreateLocalSpan(operationName string, opts ...interface{}) (s i
 }
 
 func (t *Tracer) CreateExitSpan(operationName, peer string, injector interface{}, opts ...interface{}) (s interface{}, err error) {
+	fmt.Println("create exit span start =>", operationName)
 	ctx, tracingSpan, noop := t.createNoop(operationName)
 	if noop {
 		return tracingSpan, nil
 	}
 	defer func() {
+		fmt.Println("save exit span to active")
 		saveSpanToActiveIfNotError(ctx, s, err)
 	}()
 
 	// if parent span is exit span, then use parent span as result
 	if tracingSpan != nil && tracingSpan.IsExit() && reflect.ValueOf(tracingSpan).Type() != snapshotType {
+		fmt.Println("parent span is exit span")
 		return tracingSpan, nil
 	}
 	span, err := t.createSpan0(ctx, tracingSpan, opts, withSpanType(SpanTypeExit), withOperationName(operationName), withPeer(peer))
@@ -103,6 +106,7 @@ func (t *Tracer) CreateExitSpan(operationName, peer string, injector interface{}
 	spanContext := &SpanContext{}
 	reportedSpan, ok := span.(SegmentSpan)
 	if !ok {
+		fmt.Println("exit span type is wrong")
 		return nil, errors.New("span type is wrong")
 	}
 
@@ -119,6 +123,7 @@ func (t *Tracer) CreateExitSpan(operationName, peer string, injector interface{}
 
 	err = spanContext.Encode(injector.(tracing.InjectorWrapper).Fun())
 	if err != nil {
+		fmt.Printf("Encode exit span error %v", err)
 		return nil, err
 	}
 	return span, nil
@@ -285,6 +290,7 @@ func (t *Tracer) createSpan0(ctx *TracingContext, parent TracingSpan, pluginOpts
 	}
 	s, err = NewSegmentSpan(ctx, ds, parentSpan)
 	if err != nil {
+		fmt.Printf("NewSegmentSpan error %v", err)
 		return nil, err
 	}
 	// process the opts from plugin, split opts because the DefaultSpan not contains the tracing context information(AdaptSpan)
