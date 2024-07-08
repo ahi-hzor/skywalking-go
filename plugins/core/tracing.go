@@ -42,23 +42,29 @@ func (t *Tracer) DebugStack() []byte {
 }
 
 func (t *Tracer) CreateEntrySpan(operationName string, extractor interface{}, opts ...interface{}) (s interface{}, err error) {
+	fmt.Println("create entry span start =>", operationName)
 	ctx, tracingSpan, noop := t.createNoop(operationName)
 	if noop {
+		fmt.Println("create entry span noop")
 		return tracingSpan, nil
 	}
 	defer func() {
+		fmt.Println("save entry span to active")
 		saveSpanToActiveIfNotError(ctx, s, err)
 	}()
 	// if parent span is entry span, then use parent span as result
 	if tracingSpan != nil && tracingSpan.IsEntry() && reflect.ValueOf(tracingSpan).Type() != snapshotType {
+		fmt.Println("parent span is entry span")
 		tracingSpan.SetOperationName(operationName)
 		return tracingSpan, nil
 	}
 	var ref = &SpanContext{}
 	if err := ref.Decode(extractor.(tracing.ExtractorWrapper).Fun()); err != nil {
+		fmt.Println("decode entry span ref error")
 		return nil, err
 	}
 	if !ref.Valid {
+		fmt.Println("entry span ref invalid")
 		ref = nil
 	}
 
@@ -227,6 +233,7 @@ func (s *ContextSnapshot) IsValid() bool {
 
 func (t *Tracer) createNoop(operationName string) (*TracingContext, TracingSpan, bool) {
 	if !t.InitSuccess() || t.Reporter.ConnectionStatus() == reporter.ConnectionStatusDisconnect {
+		fmt.Println("ConnectionStatusDisconnect")
 		return nil, newNoopSpan(), true
 	}
 	fmt.Println("tracing ignore start=>", operationName, t.ignoreSuffix, t.traceIgnorePath)
@@ -240,11 +247,13 @@ func (t *Tracer) createNoop(operationName string) (*TracingContext, TracingSpan,
 		span := ctx.ActiveSpan()
 		noop, ok := span.(*NoopSpan)
 		if ok {
+			fmt.Println("TracingContext ActiveSpan")
 			// increase the stack count for ensure the noop span can be clear in the context
 			noop.enterNoSpan()
 		}
 		return ctx, span, ok
 	}
+	fmt.Println("NewTracingContext")
 	ctx = NewTracingContext()
 	return ctx, nil, false
 }
@@ -255,6 +264,7 @@ func (t *Tracer) createSpan0(ctx *TracingContext, parent TracingSpan, pluginOpts
 	if parent != nil {
 		tmpSpan, ok := parent.(SegmentSpan)
 		if ok {
+			fmt.Println("parentSpan ok")
 			parentSpan = tmpSpan
 		}
 	}
@@ -265,6 +275,7 @@ func (t *Tracer) createSpan0(ctx *TracingContext, parent TracingSpan, pluginOpts
 		sampled := t.Sampler.IsSampled(ds.OperationName)
 		if !sampled {
 			// Filter by sample just return noop span
+			fmt.Println("span  sample ignore")
 			return newNoopSpan(), nil
 		}
 	}

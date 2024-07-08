@@ -64,6 +64,7 @@ func (t *Tracer) Init(entity *reporter.Entity, rep reporter.Reporter, samp Sampl
 	t.Sampler = samp
 	if logger != nil && !reflect.ValueOf(logger).IsZero() {
 		t.Log.ChangeLogger(logger)
+		fmt.Println("tracer init logger=>", logger)
 	}
 	t.Reporter.Boot(entity, t.cdsWatchers)
 	t.initFlag = 1
@@ -137,6 +138,7 @@ func (e *emptyReporter) Boot(entity *reporter.Entity, cdsWatchers []reporter.Age
 
 // nolint
 func (e *emptyReporter) SendTracing(spans []reporter.ReportedSpan) {
+	fmt.Println("emptyReporter SendTracing")
 }
 
 // nolint

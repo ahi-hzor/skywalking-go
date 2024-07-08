@@ -33,12 +33,14 @@ func NewSegmentSpan(ctx *TracingContext, defaultSpan *DefaultSpan, parentSpan Se
 	}
 	err = ssi.createSegmentContext(ctx, parentSpan)
 	if err != nil {
+		fmt.Printf("createSegmentContext error %v", err)
 		return nil, err
 	}
 	if parentSpan == nil || !parentSpan.segmentRegister() {
 		rs := newSegmentRoot(ssi)
 		err = rs.createRootSegmentContext(ctx, parentSpan)
 		if err != nil {
+			fmt.Printf("createRootSegmentContext error,%v", err)
 			return nil, err
 		}
 		s = rs
@@ -351,6 +353,7 @@ func newSegmentRoot(segmentSpan *SegmentSpanImpl) *RootSegmentSpan {
 	s.notify = ch
 	s.segment = make([]reporter.ReportedSpan, 0, 10)
 	s.doneCh = make(chan int32)
+	fmt.Println("newSegmentRoot start=>", segmentSpan.GetOperationName())
 	go func() {
 		total := -1
 		defer close(ch)
@@ -366,7 +369,12 @@ func newSegmentRoot(segmentSpan *SegmentSpanImpl) *RootSegmentSpan {
 				break
 			}
 		}
-		s.tracer().Reporter.SendTracing(append(s.segment, s))
+		spans := append(s.segment, s)
+		for _, seg := range spans {
+			fmt.Println("newSegmentRoot SendTracing span op name  =>", seg.OperationName())
+			fmt.Println("newSegmentRoot SendTracing span type  =>", seg.SpanType())
+		}
+		s.tracer().Reporter.SendTracing(spans)
 	}()
 	return s
 }
