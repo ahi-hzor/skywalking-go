@@ -85,13 +85,21 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 
 				activeSpan := tracing.ActiveSpan()
 				if activeSpan != nil {
-					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", activeSpan.TraceID(), activeSpan.TraceSegmentID(), activeSpan.SpanID(), "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
+					mongoSpanId := activeSpan.SpanID() + 1
+					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", activeSpan.TraceID(), activeSpan.TraceSegmentID(), mongoSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
 					fmt.Println()
 					tracing.SetRuntimeContextValue("traceID", activeSpan.TraceID())
 					tracing.SetRuntimeContextValue("segmentId", activeSpan.TraceSegmentID())
+					tracing.SetRuntimeContextValue("lastSpanId", mongoSpanId)
 				} else {
 					fmt.Println("activeSpanId is nil")
-					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", tracing.GetRuntimeContextValue("traceID"), tracing.GetRuntimeContextValue("segmentId"), 111, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
+					var lastSpanId int32 = -2
+					lastSpanIdCtx := tracing.GetRuntimeContextValue("lastSpanId")
+					if lastSpanIdCtx != nil {
+						lastSpanId = lastSpanIdCtx.(int32) + 1
+					}
+					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", lastSpanId, tracing.GetRuntimeContextValue("segmentId"), 111, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
+					tracing.SetRuntimeContextValue("lastSpanId", lastSpanId)
 					fmt.Println()
 
 				}
