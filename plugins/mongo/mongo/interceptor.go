@@ -71,6 +71,7 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 					tracing.WithLayer(tracing.SpanLayerDatabase),
 					tracing.WithTag(tracing.TagDBType, "MongoDB"))
 				if err != nil {
+					fmt.Printf("cannot create exit span on mongo client%v", err)
 					log.Warnf("cannot create exit span on mongo client: %v", err)
 					return
 				}
@@ -78,25 +79,33 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				if config.CollectStatement {
 					span.Tag(tracing.TagDBStatement, m.gettingStatements(startedEvent))
 				}
-
+				fmt.Println("go mongo put started span,requestId=> ", startedEvent.RequestID)
 				syncMap.Put(fmt.Sprintf("%d", startedEvent.RequestID), span)
 			},
 			Succeeded: func(ctx context.Context, succeededEvent *event.CommandSucceededEvent) {
 				if configuredMonitor != nil {
+					fmt.Println("go mongo configuredMonitor Succeeded")
 					configuredMonitor.Succeeded(ctx, succeededEvent)
 				}
+				fmt.Println("go mongo get Succeeded span,requestId=> ", succeededEvent.RequestID)
 				if span, ok := syncMap.Remove(fmt.Sprintf("%d", succeededEvent.RequestID)); ok && span != nil {
-					span.(tracing.Span).End()
+					//fmt.Println("go mongo Succeeded  end")
+					//span.(tracing.Span).End()
 				}
+				fmt.Println("go mongo Succeeded trace empty span")
 			},
 			Failed: func(ctx context.Context, failedEvent *event.CommandFailedEvent) {
 				if configuredMonitor != nil {
+					fmt.Println("go mongo configuredMonitor Failed")
 					configuredMonitor.Failed(ctx, failedEvent)
 				}
+				fmt.Println("go mongo get Failed span,requestId=> ", failedEvent.RequestID)
 				if span, ok := syncMap.Remove(fmt.Sprintf("%d", failedEvent.RequestID)); ok && span != nil {
 					span.(tracing.Span).Error(failedEvent.Failure)
-					span.(tracing.Span).End()
+					//fmt.Println("go mongo Failed  trace end")
+					//span.(tracing.Span).End()
 				}
+				fmt.Println("go mongo Failed trace empty span")
 			},
 		}
 	}

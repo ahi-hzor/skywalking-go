@@ -269,8 +269,8 @@ func (t *Tracer) createSpan0(ctx *TracingContext, parent TracingSpan, pluginOpts
 	if parent != nil {
 		tmpSpan, ok := parent.(SegmentSpan)
 		if ok {
-			fmt.Println("parentSpan ok")
 			parentSpan = tmpSpan
+			fmt.Println("parentSpan ok=>", parentSpan.GetOperationName())
 		}
 	}
 	isForceSample := len(ds.Refs) > 0
