@@ -84,8 +84,8 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 
 				fmt.Printf("Mongo tracing,traceId=>%v,segmentId=>%v,spanId=>%v,name=>%v,peer=>%v", span.TraceID(), span.TraceSegmentID(), span.SpanID(), "MongoDB/"+startedEvent.CommandName, host)
 				fmt.Println()
-				//fmt.Println("force start event tracing ending.")
-				//span.End()
+				fmt.Println("force start event tracing ending.")
+				span.End()
 			},
 			Succeeded: func(ctx context.Context, succeededEvent *event.CommandSucceededEvent) {
 				if configuredMonitor != nil {
@@ -95,7 +95,7 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				fmt.Println("go mongo get Succeeded span,requestId=> ", succeededEvent.RequestID)
 				if span, ok := syncMap.Remove(fmt.Sprintf("%d", succeededEvent.RequestID)); ok && span != nil {
 					fmt.Println("go mongo Succeeded  end")
-					//span.(tracing.Span).End()
+					span.(tracing.Span).End()
 				} else {
 					fmt.Println("go mongo Succeeded trace empty span")
 				}
@@ -109,7 +109,7 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				if span, ok := syncMap.Remove(fmt.Sprintf("%d", failedEvent.RequestID)); ok && span != nil {
 					span.(tracing.Span).Error(failedEvent.Failure)
 					fmt.Println("go mongo Failed  trace end")
-					//span.(tracing.Span).End()
+					span.(tracing.Span).End()
 				} else {
 					fmt.Println("go mongo Failed trace empty span")
 				}
