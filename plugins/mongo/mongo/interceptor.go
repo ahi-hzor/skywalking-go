@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/event"
@@ -82,8 +83,11 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				fmt.Println("go mongo put started span,requestId=> ", startedEvent.RequestID)
 				syncMap.Put(fmt.Sprintf("%d", startedEvent.RequestID), span)
 
-				fmt.Printf("Mongo tracing,traceId=>%v,segmentId=>%v,spanId=>%v,name=>%v,peer=>%v", span.TraceID(), span.TraceSegmentID(), span.SpanID(), "MongoDB/"+startedEvent.CommandName, host)
-				fmt.Println()
+				activeSpan := tracing.ActiveSpan()
+				if activeSpan != nil {
+					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", activeSpan.TraceID(), activeSpan.TraceSegmentID(), activeSpan.SpanID(), "MongoDB/"+startedEvent.CommandName, host, time.Now())
+					fmt.Println()
+				}
 				fmt.Println("force start event tracing ending.")
 				span.End()
 			},
