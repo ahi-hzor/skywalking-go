@@ -199,7 +199,7 @@ func (r *gRPCReporter) SendTracing(spans []reporter.ReportedSpan) {
 		r.logger.Errorf("reach max tracing send buffer")
 	}
 	if os.Getenv("SW_DEBUG_LOG") != "" {
-		fmt.Printf("send trace {%v} segment {%v}", segmentObject.TraceId, segmentObject.TraceSegmentId)
+		fmt.Printf("send trace {%v} segment {%v}.\n", segmentObject.TraceId, segmentObject.TraceSegmentId)
 	}
 }
 

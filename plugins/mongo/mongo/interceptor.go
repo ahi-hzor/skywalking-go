@@ -77,7 +77,7 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 					span.Tag(tracing.TagDBStatement, m.gettingStatements(startedEvent))
 				}
 				if config.Debug {
-					fmt.Printf("put mongo request [%v] to runtime contex", startedEvent.RequestID)
+					fmt.Printf("put mongo request [%v] to runtime contex.\n", startedEvent.RequestID)
 				}
 				tracing.SetRuntimeContextValue(fmt.Sprintf("mongo-req-%d", startedEvent.RequestID), span)
 				//syncMap.Put(fmt.Sprintf("%d", startedEvent.RequestID), span)
@@ -90,20 +90,20 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 					configuredMonitor.Succeeded(ctx, succeededEvent)
 				}
 				if config.Debug {
-					fmt.Printf("invoke mongo succeededEvent request [%v].", succeededEvent.RequestID)
+					fmt.Printf("invoke mongo succeededEvent request [%v].\n", succeededEvent.RequestID)
 				}
 				requestKey := fmt.Sprintf("mongo-req-%d", succeededEvent.RequestID)
 				span := tracing.GetRuntimeContextValue(requestKey)
 				//if span, ok := syncMap.Remove(fmt.Sprintf("%d", succeededEvent.RequestID)); ok && span != nil {
 				if span != nil {
 					if config.Debug {
-						fmt.Printf("mongo succeededEvent request [%v] span end", succeededEvent.RequestID)
+						fmt.Printf("mongo succeededEvent request [%v] span end.\n", succeededEvent.RequestID)
 					}
 					span.(tracing.Span).End()
 					tracing.SetRuntimeContextValue(requestKey, nil)
 				} else {
 					if config.Debug {
-						fmt.Printf("mongo succeededEvent request [%v] span empty", succeededEvent.RequestID)
+						fmt.Printf("mongo succeededEvent request [%v] span empty.\n", succeededEvent.RequestID)
 					}
 				}
 			},
@@ -112,21 +112,21 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 					configuredMonitor.Failed(ctx, failedEvent)
 				}
 				if config.Debug {
-					fmt.Printf("invoke mongo failedEvent request [%v].", failedEvent.RequestID)
+					fmt.Printf("invoke mongo failedEvent request [%v].\n", failedEvent.RequestID)
 				}
 				//if span, ok := syncMap.Remove(fmt.Sprintf("%d", failedEvent.RequestID)); ok && span != nil {
 				requestKey := fmt.Sprintf("mongo-req-%d", failedEvent.RequestID)
 				span := tracing.GetRuntimeContextValue(requestKey)
 				if span != nil {
 					if config.Debug {
-						fmt.Printf("mongo failedEvent request [%v] span end", failedEvent.RequestID)
+						fmt.Printf("mongo failedEvent request [%v] span end.\n", failedEvent.RequestID)
 					}
 					span.(tracing.Span).Error(failedEvent.Failure)
 					span.(tracing.Span).End()
 					tracing.SetRuntimeContextValue(requestKey, nil)
 				} else {
 					if config.Debug {
-						fmt.Printf("mongo failedEvent request [%v] span empty", failedEvent.RequestID)
+						fmt.Printf("mongo failedEvent request [%v] span empty.\n", failedEvent.RequestID)
 					}
 				}
 			},
