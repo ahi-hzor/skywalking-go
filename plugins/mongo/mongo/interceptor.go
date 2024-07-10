@@ -87,7 +87,7 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				if activeSpan != nil {
 					mongoSpanId := activeSpan.SpanID()
 					if span.SpanID() == -1 {
-						fmt.Println("active mongo span")
+						fmt.Println("active span,spanId=>", activeSpan.SpanID())
 						mongoSpanId = activeSpan.SpanID() + 1
 					}
 					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", activeSpan.TraceID(), activeSpan.TraceSegmentID(), mongoSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
