@@ -23,7 +23,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"os"
 	"strings"
 
 	"github.com/apache/skywalking-go/plugins/core/log"
@@ -77,7 +76,7 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				if config.CollectStatement {
 					span.Tag(tracing.TagDBStatement, m.gettingStatements(startedEvent))
 				}
-				if os.Getenv("SW_DEBUG_LOG") != "" {
+				if config.Debug {
 					fmt.Printf("put mongo request [%v] to runtime contex", startedEvent.RequestID)
 				}
 				tracing.SetRuntimeContextValue(fmt.Sprintf("mongo-req-%d", startedEvent.RequestID), span)
@@ -90,20 +89,20 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				if configuredMonitor != nil {
 					configuredMonitor.Succeeded(ctx, succeededEvent)
 				}
-				if os.Getenv("SW_DEBUG_LOG") != "" {
+				if config.Debug {
 					fmt.Printf("invoke mongo succeededEvent request [%v].", succeededEvent.RequestID)
 				}
 				requestKey := fmt.Sprintf("mongo-req-%d", succeededEvent.RequestID)
 				span := tracing.GetRuntimeContextValue(requestKey)
 				//if span, ok := syncMap.Remove(fmt.Sprintf("%d", succeededEvent.RequestID)); ok && span != nil {
 				if span != nil {
-					if os.Getenv("SW_DEBUG_LOG") != "" {
+					if config.Debug {
 						fmt.Printf("mongo succeededEvent request [%v] span end", succeededEvent.RequestID)
 					}
 					span.(tracing.Span).End()
 					tracing.SetRuntimeContextValue(requestKey, nil)
 				} else {
-					if os.Getenv("SW_DEBUG_LOG") != "" {
+					if config.Debug {
 						fmt.Printf("mongo succeededEvent request [%v] span empty", succeededEvent.RequestID)
 					}
 				}
@@ -112,21 +111,21 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				if configuredMonitor != nil {
 					configuredMonitor.Failed(ctx, failedEvent)
 				}
-				if os.Getenv("SW_DEBUG_LOG") != "" {
+				if config.Debug {
 					fmt.Printf("invoke mongo failedEvent request [%v].", failedEvent.RequestID)
 				}
 				//if span, ok := syncMap.Remove(fmt.Sprintf("%d", failedEvent.RequestID)); ok && span != nil {
 				requestKey := fmt.Sprintf("mongo-req-%d", failedEvent.RequestID)
 				span := tracing.GetRuntimeContextValue(requestKey)
 				if span != nil {
-					if os.Getenv("SW_DEBUG_LOG") != "" {
+					if config.Debug {
 						fmt.Printf("mongo failedEvent request [%v] span end", failedEvent.RequestID)
 					}
 					span.(tracing.Span).Error(failedEvent.Failure)
 					span.(tracing.Span).End()
 					tracing.SetRuntimeContextValue(requestKey, nil)
 				} else {
-					if os.Getenv("SW_DEBUG_LOG") != "" {
+					if config.Debug {
 						fmt.Printf("mongo failedEvent request [%v] span empty", failedEvent.RequestID)
 					}
 				}

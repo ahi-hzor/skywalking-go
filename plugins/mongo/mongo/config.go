@@ -20,4 +20,5 @@ package mongo
 //skywalking:config
 var config struct {
 	CollectStatement bool `config:"collect_statement"`
+	Debug            bool `config:"debug"`
 }
