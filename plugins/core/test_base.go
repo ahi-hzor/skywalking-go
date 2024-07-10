@@ -18,7 +18,6 @@
 package core
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/apache/skywalking-go/plugins/core/operator"
@@ -80,7 +79,6 @@ func (r *StoreReporter) Boot(entity *reporter.Entity, cdsWatchers []reporter.Age
 }
 
 func (r *StoreReporter) SendTracing(spans []reporter.ReportedSpan) {
-	fmt.Println("StoreReporter SendTracing")
 	r.Spans = append(r.Spans, spans...)
 }
 

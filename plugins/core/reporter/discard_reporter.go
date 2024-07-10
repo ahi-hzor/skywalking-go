@@ -18,7 +18,6 @@
 package reporter
 
 import (
-	"fmt"
 	logv3 "skywalking.apache.org/repo/goapi/collect/logging/v3"
 )
 
@@ -33,7 +32,6 @@ func (r *discardReporter) Boot(entity *Entity, cdsWatchers []AgentConfigChangeWa
 }
 func (r *discardReporter) SendTracing(spans []ReportedSpan) {
 	// do nothing
-	fmt.Println("discard reporter send tracing")
 }
 func (r *discardReporter) SendMetrics(metrics []ReportedMeter) {
 	// do nothing

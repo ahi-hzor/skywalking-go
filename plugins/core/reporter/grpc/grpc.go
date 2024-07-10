@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"google.golang.org/grpc"
@@ -131,7 +132,6 @@ func (r *gRPCReporter) ConnectionStatus() reporter.ConnectionStatus {
 func (r *gRPCReporter) SendTracing(spans []reporter.ReportedSpan) {
 	spanSize := len(spans)
 	if spanSize < 1 {
-		fmt.Println("trace len < 1")
 		return
 	}
 	rootSpan := spans[spanSize-1]
@@ -143,7 +143,6 @@ func (r *gRPCReporter) SendTracing(spans []reporter.ReportedSpan) {
 		Service:         r.entity.ServiceName,
 		ServiceInstance: r.entity.ServiceInstanceName,
 	}
-	fmt.Printf("traceId =>", rootCtx.GetTraceID())
 	for i, s := range spans {
 		spanCtx := s.Context()
 		segmentObject.Spans[i] = &agentv3.SpanObject{
@@ -160,7 +159,6 @@ func (r *gRPCReporter) SendTracing(spans []reporter.ReportedSpan) {
 			Tags:          s.Tags(),
 			Logs:          s.Logs(),
 		}
-		fmt.Println("span name =>", s.OperationName(), s.ComponentID())
 
 		srr := make([]*agentv3.SegmentReference, 0)
 		if i == (spanSize-1) && spanCtx.GetParentSpanID() > -1 {
@@ -192,15 +190,16 @@ func (r *gRPCReporter) SendTracing(spans []reporter.ReportedSpan) {
 	defer func() {
 		// recover the panic caused by close tracingSendCh
 		if err := recover(); err != nil {
-			fmt.Printf("reporter segment error %v", err)
 			r.logger.Errorf("reporter segment err %v", err)
 		}
 	}()
 	select {
 	case r.tracingSendCh <- segmentObject:
 	default:
-		fmt.Printf("max tracing send buffer")
 		r.logger.Errorf("reach max tracing send buffer")
+	}
+	if os.Getenv("SW_DEBUG_LOG") != "" {
+		fmt.Printf("send trace {%v} segment {%v}", segmentObject.TraceId, segmentObject.TraceSegmentId)
 	}
 }
 

@@ -20,16 +20,14 @@ package mongo
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"os"
+	"strings"
 
 	"github.com/apache/skywalking-go/plugins/core/log"
 	"github.com/apache/skywalking-go/plugins/core/operator"
-	"github.com/apache/skywalking-go/plugins/core/tools"
 	"github.com/apache/skywalking-go/plugins/core/tracing"
 )
 
@@ -44,7 +42,7 @@ var removeFieldsInStmt = map[string]*struct{}{
 
 func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) error {
 	opts := invocation.Args()[0].([]*options.ClientOptions)
-	syncMap := tools.NewSyncMap()
+	//syncMap := tools.NewSyncMap()
 	for _, opt := range opts {
 		hosts := opt.Hosts
 		hostLength := len(hosts)
@@ -72,7 +70,6 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 					tracing.WithLayer(tracing.SpanLayerDatabase),
 					tracing.WithTag(tracing.TagDBType, "MongoDB"))
 				if err != nil {
-					fmt.Printf("cannot create exit span on mongo client%v", err)
 					log.Warnf("cannot create exit span on mongo client: %v", err)
 					return
 				}
@@ -80,63 +77,58 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 				if config.CollectStatement {
 					span.Tag(tracing.TagDBStatement, m.gettingStatements(startedEvent))
 				}
-				fmt.Println("go mongo put started span,requestId=> ", startedEvent.RequestID)
-				syncMap.Put(fmt.Sprintf("%d", startedEvent.RequestID), span)
-
-				activeSpan := tracing.ActiveSpan()
-				if activeSpan != nil {
-					mongoSpanId := activeSpan.SpanID()
-					if span.SpanID() == -1 {
-						fmt.Println("active span,spanId=>", activeSpan.SpanID())
-						mongoSpanId = activeSpan.SpanID() + 1
-					}
-					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", activeSpan.TraceID(), activeSpan.TraceSegmentID(), mongoSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
-					fmt.Println()
-					tracing.SetRuntimeContextValue("traceID", activeSpan.TraceID())
-					tracing.SetRuntimeContextValue("segmentId", activeSpan.TraceSegmentID())
-					tracing.SetRuntimeContextValue("lastSpanId", mongoSpanId)
-				} else {
-					if tracing.GetRuntimeContextValue("traceID") != nil {
-						fmt.Println(" use GetRuntimeContextValue trace info")
-						var lastSpanId int32 = -2
-						lastSpanIdCtx := tracing.GetRuntimeContextValue("lastSpanId")
-						if lastSpanIdCtx != nil {
-							lastSpanId = lastSpanIdCtx.(int32) + 1
-						}
-						fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":2}", tracing.GetRuntimeContextValue("traceID"), tracing.GetRuntimeContextValue("segmentId"), lastSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
-						tracing.SetRuntimeContextValue("lastSpanId", lastSpanId)
-						fmt.Println()
-					}
+				if os.Getenv("SW_DEBUG_LOG") != "" {
+					fmt.Printf("put mongo request [%v] to runtime contex", startedEvent.RequestID)
 				}
+				tracing.SetRuntimeContextValue(fmt.Sprintf("mongo-req-%d", startedEvent.RequestID), span)
+				//syncMap.Put(fmt.Sprintf("%d", startedEvent.RequestID), span)
 
-				fmt.Println("force start event tracing ending.")
-				span.End()
+				/*fmt.Println("force start event tracing ending.")
+				span.End()*/
 			},
 			Succeeded: func(ctx context.Context, succeededEvent *event.CommandSucceededEvent) {
 				if configuredMonitor != nil {
-					fmt.Println("go mongo configuredMonitor Succeeded")
 					configuredMonitor.Succeeded(ctx, succeededEvent)
 				}
-				fmt.Println("go mongo get Succeeded span,requestId=> ", succeededEvent.RequestID)
-				if span, ok := syncMap.Remove(fmt.Sprintf("%d", succeededEvent.RequestID)); ok && span != nil {
-					fmt.Println("go mongo Succeeded  end")
+				if os.Getenv("SW_DEBUG_LOG") != "" {
+					fmt.Printf("invoke mongo succeededEvent request [%v].", succeededEvent.RequestID)
+				}
+				requestKey := fmt.Sprintf("mongo-req-%d", succeededEvent.RequestID)
+				span := tracing.GetRuntimeContextValue(requestKey)
+				//if span, ok := syncMap.Remove(fmt.Sprintf("%d", succeededEvent.RequestID)); ok && span != nil {
+				if span != nil {
+					if os.Getenv("SW_DEBUG_LOG") != "" {
+						fmt.Printf("mongo succeededEvent request [%v] span end", succeededEvent.RequestID)
+					}
 					span.(tracing.Span).End()
+					tracing.SetRuntimeContextValue(requestKey, nil)
 				} else {
-					fmt.Println("go mongo Succeeded trace empty span")
+					if os.Getenv("SW_DEBUG_LOG") != "" {
+						fmt.Printf("mongo succeededEvent request [%v] span empty", succeededEvent.RequestID)
+					}
 				}
 			},
 			Failed: func(ctx context.Context, failedEvent *event.CommandFailedEvent) {
 				if configuredMonitor != nil {
-					fmt.Println("go mongo configuredMonitor Failed")
 					configuredMonitor.Failed(ctx, failedEvent)
 				}
-				fmt.Println("go mongo get Failed span,requestId=> ", failedEvent.RequestID)
-				if span, ok := syncMap.Remove(fmt.Sprintf("%d", failedEvent.RequestID)); ok && span != nil {
+				if os.Getenv("SW_DEBUG_LOG") != "" {
+					fmt.Printf("invoke mongo failedEvent request [%v].", failedEvent.RequestID)
+				}
+				//if span, ok := syncMap.Remove(fmt.Sprintf("%d", failedEvent.RequestID)); ok && span != nil {
+				requestKey := fmt.Sprintf("mongo-req-%d", failedEvent.RequestID)
+				span := tracing.GetRuntimeContextValue(requestKey)
+				if span != nil {
+					if os.Getenv("SW_DEBUG_LOG") != "" {
+						fmt.Printf("mongo failedEvent request [%v] span end", failedEvent.RequestID)
+					}
 					span.(tracing.Span).Error(failedEvent.Failure)
-					fmt.Println("go mongo Failed  trace end")
 					span.(tracing.Span).End()
+					tracing.SetRuntimeContextValue(requestKey, nil)
 				} else {
-					fmt.Println("go mongo Failed trace empty span")
+					if os.Getenv("SW_DEBUG_LOG") != "" {
+						fmt.Printf("mongo failedEvent request [%v] span empty", failedEvent.RequestID)
+					}
 				}
 			},
 		}

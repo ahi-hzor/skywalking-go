@@ -32,7 +32,6 @@ type ServerInterceptor struct {
 
 func (h *ServerInterceptor) BeforeInvoke(invocation operator.Invocation) error {
 	request := invocation.Args()[1].(*http.Request)
-	fmt.Println("http server CreateEntrySpan start")
 	s, err := tracing.CreateEntrySpan(fmt.Sprintf("%s:%s", request.Method, request.URL.Path), func(headerKey string) (string, error) {
 		return request.Header.Get(headerKey), nil
 	}, tracing.WithLayer(tracing.SpanLayerHTTP),
@@ -40,7 +39,6 @@ func (h *ServerInterceptor) BeforeInvoke(invocation operator.Invocation) error {
 		tracing.WithTag(tracing.TagURL, request.Host+request.URL.Path),
 		tracing.WithComponent(5004))
 	if err != nil {
-		fmt.Println("http server CreateEntrySpan failed")
 		return err
 	}
 
@@ -51,20 +49,17 @@ func (h *ServerInterceptor) BeforeInvoke(invocation operator.Invocation) error {
 	writer := invocation.Args()[0].(http.ResponseWriter)
 	invocation.ChangeArg(0, &writerWrapper{ResponseWriter: writer, statusCode: http.StatusOK})
 	invocation.SetContext(s)
-	fmt.Println("http server CreateEntrySpan ok")
 	return nil
 }
 
 func (h *ServerInterceptor) AfterInvoke(invocation operator.Invocation, result ...interface{}) error {
 	if invocation.GetContext() == nil {
-		fmt.Println("http server AfterInvoke failed")
 		return nil
 	}
 	span := invocation.GetContext().(tracing.Span)
 	if wrapped, ok := invocation.Args()[0].(*writerWrapper); ok {
 		span.Tag(tracing.TagStatusCode, fmt.Sprintf("%d", wrapped.statusCode))
 	}
-	fmt.Println("http server end trace")
 	span.End()
 	return nil
 }

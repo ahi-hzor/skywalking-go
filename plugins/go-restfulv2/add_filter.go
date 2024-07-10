@@ -18,7 +18,6 @@
 package restfulv2
 
 import (
-	"fmt"
 	"github.com/apache/skywalking-go/plugins/core/operator"
 )
 
@@ -27,11 +26,9 @@ type AddFilterInterceptor struct {
 
 func (a *AddFilterInterceptor) BeforeInvoke(invocation operator.Invocation) error {
 	addFilterToContainer(invocation.CallerInstance())
-	fmt.Println("add go-restful filter BeforeInvoke")
 	return nil
 }
 
 func (a *AddFilterInterceptor) AfterInvoke(invocation operator.Invocation, results ...interface{}) error {
-	fmt.Println("add go-restful filter AfterInvoke")
 	return nil
 }

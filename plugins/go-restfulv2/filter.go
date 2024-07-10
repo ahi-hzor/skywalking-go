@@ -19,7 +19,6 @@ package restfulv2
 
 import (
 	"fmt"
-
 	"github.com/apache/skywalking-go/plugins/core/operator"
 	"github.com/apache/skywalking-go/plugins/core/tracing"
 
@@ -27,7 +26,6 @@ import (
 )
 
 var filterInstance = func(request *restful.Request, response *restful.Response, chain *restful.FilterChain) {
-	fmt.Println("go-restful CreateEntrySpan start")
 	s, err := tracing.CreateEntrySpan(request.Request.Method+":"+request.SelectedRoutePath(), func(k string) (string, error) {
 		return request.HeaderParameter(k), nil
 	}, tracing.WithLayer(tracing.SpanLayerHTTP),
@@ -35,7 +33,6 @@ var filterInstance = func(request *restful.Request, response *restful.Response, 
 		tracing.WithTag(tracing.TagURL, request.Request.Host+request.Request.URL.Path),
 		tracing.WithComponent(5004))
 	if err != nil {
-		fmt.Println("go-restful CreateEntrySpan failed")
 		chain.ProcessFilter(request, response)
 		return
 	}
@@ -46,9 +43,7 @@ var filterInstance = func(request *restful.Request, response *restful.Response, 
 		}
 		s.Tag(tracing.TagStatusCode, fmt.Sprintf("%d", code))
 		s.End()
-		fmt.Println("go-restful trace end")
 	}()
-	fmt.Println("go-restful trace success")
 	chain.ProcessFilter(request, response)
 }
 
