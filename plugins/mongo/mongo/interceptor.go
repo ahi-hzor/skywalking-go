@@ -85,23 +85,27 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 
 				activeSpan := tracing.ActiveSpan()
 				if activeSpan != nil {
-					mongoSpanId := activeSpan.SpanID() + 2
+					mongoSpanId := activeSpan.SpanID()
+					if 0 == len(span.TraceID()) {
+						mongoSpanId = activeSpan.SpanID() + 1
+					}
 					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", activeSpan.TraceID(), activeSpan.TraceSegmentID(), mongoSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
 					fmt.Println()
 					tracing.SetRuntimeContextValue("traceID", activeSpan.TraceID())
 					tracing.SetRuntimeContextValue("segmentId", activeSpan.TraceSegmentID())
 					tracing.SetRuntimeContextValue("lastSpanId", mongoSpanId)
 				} else {
-					fmt.Println("activeSpanId is nil")
-					var lastSpanId int32 = -2
-					lastSpanIdCtx := tracing.GetRuntimeContextValue("lastSpanId")
-					if lastSpanIdCtx != nil {
-						lastSpanId = lastSpanIdCtx.(int32) + 1
+					if tracing.GetRuntimeContextValue("traceID") != nil {
+						fmt.Println(" use GetRuntimeContextValue trace info")
+						var lastSpanId int32 = -2
+						lastSpanIdCtx := tracing.GetRuntimeContextValue("lastSpanId")
+						if lastSpanIdCtx != nil {
+							lastSpanId = lastSpanIdCtx.(int32) + 1
+						}
+						fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", tracing.GetRuntimeContextValue("traceID"), tracing.GetRuntimeContextValue("segmentId"), lastSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
+						tracing.SetRuntimeContextValue("lastSpanId", lastSpanId)
+						fmt.Println()
 					}
-					fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", tracing.GetRuntimeContextValue("traceID"), tracing.GetRuntimeContextValue("segmentId"), lastSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
-					tracing.SetRuntimeContextValue("lastSpanId", lastSpanId)
-					fmt.Println()
-
 				}
 
 				fmt.Println("force start event tracing ending.")
