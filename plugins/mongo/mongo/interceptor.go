@@ -102,7 +102,7 @@ func (m *NewClientInterceptor) BeforeInvoke(invocation operator.Invocation) erro
 						if lastSpanIdCtx != nil {
 							lastSpanId = lastSpanIdCtx.(int32) + 1
 						}
-						fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":1}", tracing.GetRuntimeContextValue("traceID"), tracing.GetRuntimeContextValue("segmentId"), lastSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
+						fmt.Printf("{\"traceId\":\"%v\",\"segmentId\":\"%v\",\"spanId\":\"%v\",\"name\":\"%v\",\"peer\":\"%v\",\"time\":\"%v\",\"mongo-tracing\":2}", tracing.GetRuntimeContextValue("traceID"), tracing.GetRuntimeContextValue("segmentId"), lastSpanId, "MongoDB/"+startedEvent.CommandName, host, time.Now().Unix())
 						tracing.SetRuntimeContextValue("lastSpanId", lastSpanId)
 						fmt.Println()
 					}
